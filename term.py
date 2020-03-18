@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import random
 import csv
+import os
 
 
 class Player():
@@ -16,16 +17,16 @@ class Player():
 
     def __str__(self):
         if self.sex == 0:
-            s = "M"
+            s = "male"
         else:
-            s = "F"
+            s = "female"
         if self.orient == 0:
-            o = "h"
+            o = "hetero"
         elif self.orient == 1:
-            o = "b"
-        else:
-            o = "g"
-        return self.name + " (" + s + ", " + o + ")"
+            o = "bisex"
+        elif self.orient == 2:
+            o = "gay"
+        return self.name + " (" + s + ")" if self.orient == -1 else self.name + " (" + s + ", " + o + ")"
 
     def get_id(self):
         return self.id
@@ -70,102 +71,117 @@ class Place():
         return self.name
 
 
+ABS_PATH = os.path.dirname(os.path.abspath(__file__)) + \
+    "/" if os.path.dirname(os.path.abspath(__file__)) else ""
+
 nSkips = 3
 
 loop = True
-nPlayers = 1
-while (int(nPlayers) < 2 or nPlayers.isdigit() == False):
-    try:
-        nPlayers = input("Players: ")
-    except IOError:
-        raise(IOError)
+while(loop):
+    nPlayers = 1
+    while (int(nPlayers) < 2 or nPlayers.isdigit() == False):
+        try:
+            nPlayers = input("Players: ")
+        except IOError:
+            raise(IOError)
 
-nPlayers = int(nPlayers)
-players = []
-partners = []
-names = []
-stats = [0]*nPlayers
+    nPlayers = int(nPlayers)
+    players = []
+    partners = []
+    names = []
+    stats = [0]*nPlayers
 
-considerOrient = -1
-while (int(considerOrient) < 0 or \
-        int(considerOrient) > 1 or \
-        considerOrient.isdigit() == False):
-    try:
-        considerOrient = input("Consider sexual orientation? (0, 1): ")
-    except IOError:
-        raise(IOError)
-considerOrient = int(considerOrient)
-totSex = 0
-for n in range(nPlayers):
-    try:
-        namePlayer = input("Name player " + str(n + 1) + ": ")
-    except IOError:
-        raise(IOError)
+    considerOrient = -1
+    while (int(considerOrient) < 0 or
+            int(considerOrient) > 1 or
+            considerOrient.isdigit() == False):
+        try:
+            considerOrient = input("Consider sexual orientation? (0, 1): ")
+        except IOError:
+            raise(IOError)
+    considerOrient = int(considerOrient)
+    totSex = 0
+    for n in range(nPlayers):
+        try:
+            namePlayer = input("Name player " + str(n + 1) + ": ")
+        except IOError:
+            raise(IOError)
 
-    if (namePlayer not in names):
-        names.append(namePlayer)
-    else:
-        while (namePlayer in names):
-            print(namePlayer + " is already chosen")
-            try:
-                namePlayer = input("Name player " + str(n + 1) + ": ")
-            except IOError:
-                raise(IOError)
-        names.append(namePlayer)
+        if (namePlayer not in names):
+            names.append(namePlayer)
+        else:
+            while (namePlayer in names):
+                print(namePlayer + " is already chosen")
+                try:
+                    namePlayer = input("Name player " + str(n + 1) + ": ")
+                except IOError:
+                    raise(IOError)
+            names.append(namePlayer)
 
-    sexPlayer = -1
-    while (int(sexPlayer) < 0 or \
-        int(sexPlayer) > 1 or \
-        sexPlayer.isdigit() == False):
-        print("Sex of player", str(n + 1), "(m=0, f=1): ", end="")
-        sexPlayer = input("")
-    sexPlayer = int(sexPlayer)
+        sexPlayer = -1
+        while (int(sexPlayer) < 0 or
+               int(sexPlayer) > 1 or
+               sexPlayer.isdigit() == False):
+            print("Sex of player", str(n + 1), "(m=0, f=1): ", end="")
+            sexPlayer = input("")
+        sexPlayer = int(sexPlayer)
 
-    orPlayer = -1
-    if (considerOrient == 1):
-        while (int(orPlayer) < 0 or \
-        int(orPlayer) > 2 or \
-        orPlayer.isdigit() == False):
-            print("Sexual orientation of player ", str(n + 1))
-            print("(h=0, b=1, g=2): ", end="")
-            orPlayer = input("")
-    totSex = totSex + sexPlayer
-    players.append(Player(n, namePlayer, sexPlayer, orPlayer, partners, nSkips, stats))
+        orPlayer = -1
+        if (considerOrient == 1):
+            while (int(orPlayer) < 0 or
+                   int(orPlayer) > 2 or
+                   orPlayer.isdigit() == False):
+                print("Sexual orientation of player ", str(n + 1))
+                print("(h=0, b=1, g=2): ", end="")
+                orPlayer = input("")
+        totSex = totSex + sexPlayer
+        players.append(Player(n, namePlayer, sexPlayer,
+                              orPlayer, partners, nSkips, stats))
 
+    for partner in players:
+        if (considerOrient == 1):
+            partners = []
+            sex = int(partner.get_sex())
+            orient = int(partner.get_orient())
+            name = partner.get_name()
 
-for partner in players:
-    if (considerOrient == 1):
-        partners = []
-        sex = int(partner.get_sex())
-        orient = int(partner.get_orient())
-        name = partner.get_name()
-
-        for partner2 in players:
-            name2 = partner2.get_name()
-            if (name != name2):
-                orient2 = int(partner2.get_orient())
-                sex2 = int(partner2.get_sex())
+            for partner2 in players:
                 name2 = partner2.get_name()
-                if (sex == 0 and orient == 0 and sex2 == 1 and orient2 != 2) or (sex == 1 and orient == 0 and sex2 == 0 and orient2 != 2):
-                    partners.append(partner2)
-                if (sex == 0 and orient == 1 and not (sex2 == 1 and orient2 == 2) and not (sex2 == 0 and orient2 == 0)) or (sex == 1 and orient == 1 and not (sex2 == 0 and orient2 == 2) and not (sex2 == 1 and orient2 == 0)):
-                    partners.append(partner2)
-                if (sex == 0 and orient == 2 and sex2 == 0 and orient2 != 0) or (sex == 1 and orient == 2 and sex2 == 1 and orient2 != 0):
-                    partners.append(partner2)
-        if partners == []:
-            print(name, "doesn't have any partner! Aborting")
-            loop = False
-        partner.set_partners(partners)
-    else:
-        partners = []
-        name = partner.get_name()
+                if (name != name2):
+                    orient2 = int(partner2.get_orient())
+                    sex2 = int(partner2.get_sex())
+                    name2 = partner2.get_name()
+                    if (sex == 0 and orient == 0 and sex2 == 1 and orient2 != 2) or (sex == 1 and orient == 0 and sex2 == 0 and orient2 != 2):
+                        partners.append(partner2)
+                    if (sex == 0 and orient == 1 and not (sex2 == 1 and orient2 == 2) and not (sex2 == 0 and orient2 == 0)) or (sex == 1 and orient == 1 and not (sex2 == 0 and orient2 == 2) and not (sex2 == 1 and orient2 == 0)):
+                        partners.append(partner2)
+                    if (sex == 0 and orient == 2 and sex2 == 0 and orient2 != 0) or (sex == 1 and orient == 2 and sex2 == 1 and orient2 != 0):
+                        partners.append(partner2)
+            if partners == []:
+                print(name, "doesn't have any partner! Aborting")
+                loop = False
+            partner.set_partners(partners)
+        else:
+            partners = []
+            name = partner.get_name()
 
-        for partner2 in players:
-            name2 = partner2.get_name()
-            if (name != name2):
-                partners.append(partner2)
-        partner.set_partners(partners)
+            for partner2 in players:
+                name2 = partner2.get_name()
+                if (name != name2):
+                    partners.append(partner2)
+            partner.set_partners(partners)
+    confirm = -1
+    for pl in range(len(players)):
+        print(str(pl + 1) + ".", players[pl])
+    while (int(confirm) < 0 or int(confirm) > 1 or confirm.isdigit() == False):
+        try:
+            confirm = input("Are data correct? (0, 1): ")
+        except IOError:
+            raise(IOError)
+    if (confirm == "1"):
+        loop = False
 
+loop = True
 if loop == True:
     print("Include sexual actions? (0 (no), 1 (also), 2 (only)): ")
     level = -1
@@ -180,7 +196,7 @@ for i in range(levelMax + 1):
     places.append(list())
     actions.append(list())
 
-with open('Documenti/Progetti/SexTurn/labels.csv') as csvfile:
+with open(ABS_PATH + 'labels.csv') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         if row["type"] == "A":
@@ -188,11 +204,14 @@ with open('Documenti/Progetti/SexTurn/labels.csv') as csvfile:
         elif row["type"] == "P":
             if (totSex == 0 or totSex == nPlayers):
                 if (totSex == 0 and row["sex"] != "1"):
-                    places[int(row["level"])].append(Place(row["label"], row["sex"]))
+                    places[int(row["level"])].append(
+                        Place(row["label"], row["sex"]))
                 if (totSex == nPlayers and row["sex"] != "0"):
-                    places[int(row["level"])].append(Place(row["label"], row["sex"]))
+                    places[int(row["level"])].append(
+                        Place(row["label"], row["sex"]))
             else:
-                places[int(row["level"])].append(Place(row["label"], row["sex"]))
+                places[int(row["level"])].append(
+                    Place(row["label"], row["sex"]))
         else:
             print("Error in CSV file")
             loop = False
@@ -247,16 +266,20 @@ while loop:
         player2 = partner[random.randint(0, len(partner) - 1)]
         sex = player2.get_sex()
         randomAction = random.randint(0, len(actions) - 1)
-        action = actions[randomAction][random.randint(0, len(actions[randomAction]) - 1)]
+        action = actions[randomAction][random.randint(
+            0, len(actions[randomAction]) - 1)]
         randomPlace = random.randint(0, len(places) - 1)
-        place = places[randomPlace][random.randint(0, len(places[randomPlace]) - 1)]
+        place = places[randomPlace][random.randint(
+            0, len(places[randomPlace]) - 1)]
         sexplace = place.get_sex()
         while ((sex == 0 and sexplace == 1) or (sex == 1 and sexplace == 0)):
             randomPlace = random.randint(0, len(places) - 1)
-            place = places[randomPlace][random.randint(0, len(places[randomPlace]) - 1)]
+            place = places[randomPlace][random.randint(
+                0, len(places[randomPlace]) - 1)]
             sexplace = place.get_sex()
 
-        print(playr.get_name(), "must", action.lower(), player2.get_name() + "'s", place.get_name())
+        print(playr.get_name(), "must", action.lower(),
+              player2.get_name() + "'s", place.get_name())
         goOn = input("")
         stats = playr.get_stats()
         stats[player2.get_id()] = stats[player2.get_id()] + 1
